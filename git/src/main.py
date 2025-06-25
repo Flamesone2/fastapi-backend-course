@@ -102,7 +102,7 @@ def main():
             title_to_remove = input("Введите название книги, которую хотите удалить: ").strip()
 
             new_books = remove_book(books, title_to_remove)
-            if len(new_books) > len(books):
+            if len(new_books) < len(books):
                 books = new_books
                 saving_books(books)
                 print("Книга удалена!")
@@ -119,17 +119,12 @@ def main():
             else:
                 print("Ничего не найдено.")
 
-        elif choice == '6':
+        elif choice == '5':
             print("Выход из программы.")
             break
 
         else:
             print("Некорректный ввод. Попробуйте ещё раз.")
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
