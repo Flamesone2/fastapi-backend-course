@@ -126,6 +126,7 @@ def main():
         else:
             print("Некорректный ввод. Попробуйте ещё раз.")
             print("Жизнь зла")
+            print("Без github actions")
 
 if __name__ == "__main__":
     main()
