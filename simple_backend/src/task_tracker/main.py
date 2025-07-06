@@ -1,32 +1,43 @@
 from fastapi import FastAPI
 from json_storage import JsonFileTaskStorage
 from gist_api import GistAPI
+from cloudflare import CloudFlare
+
 app = FastAPI()
 gist = GistAPI()
+ai_advice = CloudFlare()
+
 
 # До github gists использовался класс для работы с json-файлом,
 # хранящемся локально
 # json_file = JsonFileTaskStorage("data.json")
 # task_data = json_file.read_file()
+
+
 @app.get("/tasks")
 def get_tasks():
     task_data = gist.get_gist()
+
     if task_data:
         res = ""
         for task in task_data.values():
-            res += f"Task {task[0]} status: {task[1]}."
+            res += (f"Task {task[0]}."
+                    f" Status: {task[1]}."
+                    f" Ai advice: {task[2]}")
         return res
     return "No tasks yet."
 
 
 @app.post("/tasks")
 def create_task(task_id: str, task_name: str, status: str):
-
     task_data = gist.get_gist()
     if str(task_id) not in task_data:
-        task_data[task_id] = [task_name, status]
+        advice = ai_advice.run(task_name)
+        task_data[task_id] = [task_name, status, advice]
         gist.patch_gist(task_data)
-        return f"Task {task_data[task_id][0]} created."
+
+        return (f"Task {task_data[task_id][0]} created. "
+                f"Ai advice is {advice}.")
     return f"Task with id {task_id} already exists."
 
 
@@ -34,11 +45,12 @@ def create_task(task_id: str, task_name: str, status: str):
 def update_task(task_id: str, new_status: str):
     task_data = gist.get_gist()
     if str(task_id) in task_data:
-        task_data[task_id] = [task_data[task_id][0], new_status]
+        task_data[task_id] = [task_data[task_id][0],
+                              new_status,
+                              task_data[task_id][2]]
         gist.patch_gist(task_data)
         return f"Task {task_data[task_id][0]} status has been changed to {new_status}"
     return "No such task."
-
 
 
 @app.delete("/tasks/{task_id}")
@@ -50,4 +62,3 @@ def delete_task(task_id: str):
 
         return f"Task {task_name} has been deleted."
     return f"Task id {task_id} not found"
-
