@@ -1,5 +1,5 @@
 import requests
-from json import loads, dumps
+from json import loads, dumps, JSONDecodeError
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -18,8 +18,12 @@ headers = {
 class GistAPI:
     def get_gist(self):
         get = requests.get(url, headers=headers).json()
-        task_data = loads(get["files"]["data.json"]["content"])
-        return task_data
+        try:
+            task_data = loads(get["files"]["data.json"]["content"])
+        except JSONDecodeError:
+            return {}
+        else:
+            return task_data
 
     def patch_gist(self, new_data):
         data = {
