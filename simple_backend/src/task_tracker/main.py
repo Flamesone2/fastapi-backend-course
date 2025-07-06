@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from json_storage import JsonFileTaskStorage
-from gist_api import GistAPI
-from cloudflare import CloudFlare
+from basehttpclient import GistAPI, CloudFlare
+
 
 app = FastAPI()
 gist = GistAPI()
@@ -16,7 +16,7 @@ ai_advice = CloudFlare()
 
 @app.get("/tasks")
 def get_tasks():
-    task_data = gist.get_gist()
+    task_data = gist.parse()
 
     if task_data:
         res = ""
@@ -30,11 +30,11 @@ def get_tasks():
 
 @app.post("/tasks")
 def create_task(task_id: str, task_name: str, status: str):
-    task_data = gist.get_gist()
+    task_data = gist.parse()
     if str(task_id) not in task_data:
         advice = ai_advice.run(task_name)
         task_data[task_id] = [task_name, status, advice]
-        gist.patch_gist(task_data)
+        gist.patch(task_data)
 
         return (f"Task {task_data[task_id][0]} created. "
                 f"Ai advice is {advice}.")
@@ -43,22 +43,22 @@ def create_task(task_id: str, task_name: str, status: str):
 
 @app.put("/tasks/{task_id}")
 def update_task(task_id: str, new_status: str):
-    task_data = gist.get_gist()
+    task_data = gist.parse()
     if str(task_id) in task_data:
         task_data[task_id] = [task_data[task_id][0],
                               new_status,
                               task_data[task_id][2]]
-        gist.patch_gist(task_data)
+        gist.patch(task_data)
         return f"Task {task_data[task_id][0]} status has been changed to {new_status}"
     return "No such task."
 
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: str):
-    task_data = gist.get_gist()
+    task_data = gist.parse()
     if str(task_id) in task_data:
         task_name = task_data.pop(str(task_id))[0]
-        gist.patch_gist(task_data)
+        gist.patch(task_data)
 
         return f"Task {task_name} has been deleted."
     return f"Task id {task_id} not found"
